@@ -4,7 +4,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from astropy.table import Table
 import sncosmo
-import simulate_lsst as sl
 from numpy.random import normal, uniform
 
 
