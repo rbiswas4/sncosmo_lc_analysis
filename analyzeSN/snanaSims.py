@@ -72,7 +72,7 @@ class SnanaSims(object):
                    n=n)
 
 
-    @staticmenthod
+    @staticmethod
     def snanadatafile(snanafileroot, filetype='head', location='./'):
         '''
         obtain the name of the head or phot file of an SNANA simulation
