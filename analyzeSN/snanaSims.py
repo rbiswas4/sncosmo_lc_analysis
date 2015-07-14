@@ -16,8 +16,8 @@ class SnanaSims(object):
     Attributes
     ----------
 
-    snList : list of `~astropy.Table.Table` with each Table containing a
-        light curve of a SN. 
+    snList : list of `~astropy.table.Table`
+        each Table contains a light curve of a SN. 
     
     """
 
@@ -36,6 +36,8 @@ class SnanaSims(object):
         
         ..note: The column names of the SNANA data files are not reformated
                  for SNCosmo use
+
+
        """ 
         self.snList =  sncosmo.read_snana_fits(head_file=headfile,
                                                phot_file=photfile, 
@@ -54,21 +56,24 @@ class SnanaSims(object):
             root file name for the SNANA which is the prefix to
             '_HEAD.FITS', or '_PHOT.FITS'
         location : string, optional defaults to current working directory './' 
-            directory where the head and phot files are located
+            Relative or absolute path to the directory where the head and phot
+            files are located
         snids : integer/string, optional defaults to None
             if not None, only SN observations corresponding to SNID snid
             are loaded
         n : Integer, defaults to None
             if not None, only the first n SN light curves are loaded
         """
-        headfile = self.snanadatafile(snanafileroot, filetype='head',
-                                      location=location)
-        photfile = self.snanadatafile(snanafileroot, filetype='phot',
-                                      location=location)
+
+
+        headfile = cls.snanadatafile(snanafileroot, filetype='head',
+                                     location=location)
+        photfile = cls.snanadatafile(snanafileroot, filetype='phot',
+                                     location=location)
         data = sncosmo.read_snana_fits(head_file=headfile,
                                        phot_file=photfile,
                                        snids=snids, n=None)
-        return cls(head_file=headfile, phot_file=photfile, snids=snids,
+        return cls(headfile=headfile, photfile=photfile, snids=snids,
                    n=n)
 
 
@@ -87,7 +92,8 @@ class SnanaSims(object):
             'head' or 'phot' depending on whether a summary file or a photometry
             file is being used.
         location : string, optional defaults to current working directory './' 
-            directory in which the file is located
+            relative or absolute path to the directory in which the file is
+            located
 
         Returns
         -------
@@ -95,6 +101,7 @@ class SnanaSims(object):
 
         '''
         import os
+        location = os.path.abspath(location)
         suffix = '_HEAD.FITS'
         if filetype == 'phot':
             suffix = '_PHOT.FITS'
