@@ -11,5 +11,6 @@ setup(# package information
       packages=['analyzeSN'],
       # What data to include as packages
       include_package_data=True,
-      package_data={'': ['example_data/*.dat']}
+      package_data={'': ['example_data/*.FITS']}
+
       )
