@@ -111,7 +111,7 @@ class SnanaSims(object):
             raise ValueError('filetype should be one of "head" or "phot"', filetype)
         location = os.path.abspath(location)
         suffix = '_HEAD.FITS'
-        if filetype == 'phot':
+        if filetype.lower() == 'phot':
             suffix = '_PHOT.FITS'
         fname = snanafileroot + suffix
         return os.path.join(location, fname)
