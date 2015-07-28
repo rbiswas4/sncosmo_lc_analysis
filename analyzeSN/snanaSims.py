@@ -199,4 +199,4 @@ class SnanaSims(object):
             band.name = bandpass
             if bandpass == 'y':
                 band.name = 'Y'
-            band.sncosmo.registry.register(band)
+            sncosmo.registry.register(band)
