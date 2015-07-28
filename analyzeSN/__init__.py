@@ -1,4 +1,3 @@
-# from . import fitting
 import os
 from . import filters
 from . import snanaSims
