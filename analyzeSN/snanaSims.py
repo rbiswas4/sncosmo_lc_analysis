@@ -6,6 +6,7 @@ A module for helper functions to read SNANA simulations
 import numpy as np
 import sncosmo
 
+import filters
 
 class SnanaSims(object):
     """
@@ -184,3 +185,18 @@ class SnanaSims(object):
         else:
             sn.rename_column('FLT', 'band')
         return sn 
+    @staticmethod
+    def matchSNANAbandnamesinregistry():
+        """
+        Will have to build this along as we go, as I don't know the variety
+        of naming conventions
+
+        """
+
+        bandPassList = ['u', 'g', 'r', 'i', 'z', 'y']
+        for bandpass in bandPassList:
+            band = sncosmo.get_bandpass('LSST_' + bandpass)
+            band.name = bandpass
+            if bandpass == 'y':
+                band.name = 'Y'
+            band.sncosmo.registry.register(band)
