@@ -1,81 +1,115 @@
 #!/usr/bin/env python
+"""
+classes and methods to analyze the outputs of light curve characterization
+routines, particularly for SALT2 light curves
+"""
 
+import numpy as np
 import pandas as pd
-from copy import deepcopy
+# from copy import deepcopy
 from . import cov_utils as cutils
 
 class ResChar(object):
-
-def vparameters(res):
     """
-    Return the estimate of the varied parameters
-
-    Parameters
-    ----------
-    res : `sncosmo.utils.Result` instance, mandatory
-
+    A class to hold results of characterizing a light curve fit. Mostly
+    this will be constructed from `sncosmo.utils.res` instances
     """
-    # parameters = deepcopy(res.parameters)
-    # vparam_names = res.vparam_names
-    vparameters = [res.parameters[res.param_names.index(v)]
-                   for v in res.vparam_names]
 
-    return pd.Series(vparameters)
+    def __init__(self,
+                 vparam_names,
+                 param_names,
+                 parameters,
+                 covariance,
+                 samples=None,
+                 weights=None,
+                 sncosmoModel=None):
+        """
+        constructor for class
 
-def subCovariance(covariance, paramList, array=False):
-    """
-    returns the covariance of a subset of parameters in a covariance dataFrame.
+        Parameters
+        ----------
+        vparam_names : list of strings, mandatory
+            model parameters inferred in the characterization
+        param_names : list of strings, mandatory
+            model parameters (complete list)
+        parameters : list of floats, mandatory
+            values of all model parameters in same order as param_names
+        covariance : `numpy.ndarray`, mandatory
+            Covariance of all the varied parameters. Should be a
+            symmetric positive definite array of shape(n, n) where
+            n = len(vparam_names)
+        samples : `numpy.ndarray`, optional, defaults to None
+            samples of shape(num, n) where num = number of samples, and
+            n = len(vparam_names). May not be independent
+        weights : `np.array` , optional defaults to None
+            must have length equal to len(samples) if present. For
+            mcmc_lc, this is usually used as `np.ones`. For nest_lc
+            the weights are used to calculate quantities
+        sncsomoModel : `sncosmo.Model`, optional, defaults to None
+            model returned from sncsomo estimate
+        """
 
-    Parameters
-    ----------
-    covariance :
-
-    paramList :
-
-    Returns
-    -------
-
-    """
-    arr = covariance.ix[paramList, paramList]
-    if array:
-        return arr
-    return pd.DataFrame(arr, columns=paramList, index=paramList)
-
-
-
-
-def covariance(res, normalized=False):
-    """
-    Returns the covariance Matrix for the varied parameters as a
-    `pandas.DataFrame`, so that covariance elements may be called
-    by either index or parameters.
-
-    Parameters
-    ----------
-    res : `sncosmo.utils.result` instance, mandatory 
-
-    Returns
-    -------
-    a `pandas.DataFrame` with column names and indexes given by the parameter
-    names
+        self.vparam_names = vparam_names
+        self.param_names = param_names
+        self._parameters = parameters
+        self._covariance = covariance
+        self.samples = samples
+        self.weights = weights
+        self.sncosmoModel = sncosmoModel
 
 
-    Examples
-    --------
-    >>> cov = covariance(res)
-    >>> cov.ix[['t0', 'x1'],['t0', 'x1']]
-    >>> cov.iloc[[0, 2], [0, 2]]
-    """
-    _cov = deepcopy(res[0].covariance)
-    vnames = res[0].vparam_names
-    cov = pd.DataFrame(_cov, columns=vnames, index=vnames)
+    @classmethod
+    def fromSNCosmoRes(cls, SNCosmoRes):
+        """
+        Instantiate this object from an instance of `sncosmo.utils.res`
 
-    if not normalized:
-        return cov
+        Parameters
+        ----------
+        SNCosmoRes : instance of `sncosmo.utils.res
+        """
 
-    for i, col in enumerate(cov.columns):
-        cov[col] = cov[col]/stds[i]
+        res, model = SNCosmoRes
 
-    for i in range(len(cov)):
-        cov.iloc[i] = cov.iloc[i]/stds[i]
-    return cov
+        # samples if the method was mcmc/nest_lc but not if max_lc
+        # weights makes sense for mcmc methods
+        samples = None
+        if 'samples' in res.keys():
+            samples = res['samples']
+            weights = np.ones(len(samples))
+
+        # if method was nest_lc
+        if 'weights' in res.keys():
+            weights = res['weights']
+
+        return cls(vparam_names=res.vparam_names,
+                   param_names=res.param_names,
+                   parameters=res.parameters,
+                   covariance=res.covariance,
+                   samples=samples,
+                   weights=weights,
+                   sncosmoModel=model)
+
+
+
+    @property
+    def parameters(self):
+        """
+        return the model parameters as a `pd.Series`
+        """
+        return pd.Series(self._parameters, index=self.param_names)
+    @property
+    def vparams(self):
+        """
+        return the values of the varied parameters as a `pd.Series`
+        """
+        vparameters = [self._parameters[self.param_names.index(v)]
+                       for v in self.vparam_names]
+        return pd.Series(vparameters, index=self.vparam_names)
+
+    @property
+    def covariance(self):
+        """
+        return the covariance as a `pd.DataFrame`
+        """
+        cutils.covariance(self._covariance, paramNames=self.vparam_names)
+
