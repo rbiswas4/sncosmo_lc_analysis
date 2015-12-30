@@ -7,6 +7,25 @@ import numpy as np
 import pandas as pd
 # from copy import deepcopy
 
+def expAVsquare(covV, A):
+    """
+    Return the expectation of (A^T V)^2 where A is a constant vector and V is
+    a random vector V ~ N(0., covV) by computing A^T * covV * A
+
+    Parameters
+    ----------
+    covV : `np.ndarray`, mandatory
+    A : `np.array`, mandatory
+        vector of constants.
+
+    Returns
+    -------
+    float variance (scalar) 
+    """
+
+    va = np.sum(covV* A, axis=1)
+    var = np.sum(A * va, axis=0)
+    return var
 
 def log_covariance(covariance, paramName, paramValue, factor=1.):
     """
