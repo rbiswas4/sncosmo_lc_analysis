@@ -1,11 +1,22 @@
 #!/usr/bin/env python
 """
 A number of utility functions to conventientyly deal with covariances
+
+- generateCov : function to generate random covariances as `np.ndarray`
+
+- covariance : dress up `np.ndarray` covariances as `pd.DataFrames`
+- subcovariance : extract subcovariance for two indexes or parameter names
+
+- log_covariance : cov(log(x), params) given cov(x, params) in linear approx.
+- expAVsquare : < (A V)^2 > given Cov, where A is const, V ~ N(0, Cov)
 """
 
 import numpy as np
 import pandas as pd
 # from copy import deepcopy
+__all__ = ['expAVsquare', 'log_covariance', 'subcovariance', 'covariance',
+           'generateCov']
+
 
 def expAVsquare(covV, A):
     """
@@ -91,14 +102,15 @@ def subcovariance(covariance, paramList, array=False):
 
 def covariance(covArray, paramNames=None, normalized=False):
     """
-    Returns the covariance Matrix for the varied parameters as a
-    `pandas.DataFrame`, so that covariance elements may be called
-    by either index or parameters.
+    converts a covariance matrix in `numpy.ndarray` to a
+    `pandas.DataFrame`. If paramNames is not None, then the dataframe
+    is indexed by the parameter names, and has columns corresponding
+    to the parameter names enabling easy access by index or names.
 
     Parameters
     ----------
     covArray : `numpy.ndarray` of the covariance, mandatory
-    paramNames : list of strings, optional, defaults to None
+    paramNames : iterable of strings, optional, defaults to None
     normalized : Bool, optional, defaults to False
         whether to return the normalized covariance matrix
 
@@ -139,3 +151,28 @@ def covariance(covArray, paramNames=None, normalized=False):
     for i in range(len(cov)):
         cov.iloc[i] = cov.iloc[i]/stds[i]
     return cov
+
+def generateCov(dims, seed=None, low=-0.5, high=0.5):
+    """
+    generate a 2D semi-positive definite matrix of size dimsXdims. While
+    this will create different random matrices, the exact distribution of
+    the matrices has not been checked.
+
+    Parameters
+    ----------
+    dims : integer, mandatory
+	size of the matrix
+    seed : integer, optional, defaults to None
+	sets the seed of the random number generator. If None,
+	numpy chooses the seed.
+    low : float, optional defaults to -1.
+	Entries are x * y, and the smallest value for x, or y is low
+    high  : float, optional defaults to 1.
+	Entries are x * y, and the largest value for x, or y is high
+    """
+    if seed is not None:
+        np.random.seed(seed)
+    x = np.random.uniform(low, high, size=dims)
+    y = np.random.uniform(low, high,size=dims)
+    m = np.outer(x, y)
+    return np.dot(m, m.transpose())

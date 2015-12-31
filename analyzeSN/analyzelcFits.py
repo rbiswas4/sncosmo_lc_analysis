@@ -7,9 +7,9 @@ routines, particularly for SALT2 light curves
 import numpy as np
 import pandas as pd
 from copy import deepcopy
-import cov_utils as cutils
+from . import cov_utils as cutils
 
-
+__all__ = ['ResChar']
 class ResChar(object):
     """
     A class to hold results of characterizing a light curve fit. Mostly
