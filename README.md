@@ -11,6 +11,8 @@ python setup.py install --user
 
 ## Tests
 In the top level directory execute
-$nosetests -v
+```
+nosetests -v
+```
 
 
