@@ -206,7 +206,7 @@ class ResChar(object):
         samples['mB'] = -2.5 * np.log10(samples['x0'])
         samples['MDelta'] = MDelta
         samples['mu'] = samples['mB'] + alpha * samples['x1'] \
-            - beta * samples['c'] + samples['MDelta']
+            + beta * samples['c'] + samples['MDelta']
         del samples['MDelta']
         del samples['x0']
         return samples
