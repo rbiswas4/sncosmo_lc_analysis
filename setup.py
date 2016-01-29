@@ -10,5 +10,5 @@ setup(# package information
       package_dir={'analyzeSN':'analyzeSN'},
       # What data to include as packages
       include_package_data=True,
-      package_data={'analyzeSN': ['example_data/*.FITS']}
+      package_data={'analyzeSN': ['example_data/*.FITS', 'example_data/*.dat', 'example_data/*.md']}
       )

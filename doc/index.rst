@@ -10,7 +10,9 @@ Contents:
 
 .. toctree::
    :maxdepth: 2
-.. automodule:: analyzeSN.snanaSims
+.. automodule:: analyzeSN.cov_utils
+    :members:
+.. automodule:: analyzeSN.analyzelcFits
     :members:
 
 

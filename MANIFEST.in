@@ -1,1 +1,3 @@
 include example_data/*.FITS
+include example_data/*.dat
+imclude example_data/*.md
