@@ -52,7 +52,8 @@ class PhotometryData(object):
     @staticmethod
     def sanitize(table, bandprefix):
         table['zpsys'] = 'ab'
-        table['band'] = [bandprefix + x[-1] for x in np.asarray(table['band'])]
+        table['band'] = [bandprefix + x[-1] for x in np.asarray(table['band'])
+                         if 'megacam' in x.lower()]
         return table
 
         
