@@ -77,10 +77,14 @@ class ResChar(object):
         if 'samples' in res.keys():
             samples = res['samples']
             weights = np.ones(len(samples))
+        else:
+            samples = None
+            weights = None
 
         # if method was nest_lc
         if 'weights' in res.keys():
             weights = res['weights']
+
 
         return cls(vparam_names=res.vparam_names,
                    param_names=res.param_names,
@@ -159,7 +163,7 @@ class ResChar(object):
         return cutils.expAVsquare(sc, A)
 
         return 0.
-    def salt_samples(self, alpha=0.14, beta=-3.1, MDelta=0.):
+    def salt_samples(self, alpha=0.14, beta=-3.1, MDelta=0., trimMDelta=True):
         """
         return the samples for SALT2 variables
 
@@ -171,6 +175,8 @@ class ResChar(object):
                 to 0.
             Offset or environment dependent additive value to obtain the
             correct absolute luminosity/ distance modulus.
+        TrimMDelta : remove MDelta and x0 columns. Used for easier plotting
+            of posteriors.
         Returns
         -------
         `pd.dataFrame` with extra column names ['mB', 'MDelta', 'mu']
@@ -200,5 +206,7 @@ class ResChar(object):
         samples['mB'] = -2.5 * np.log10(samples['x0'])
         samples['MDelta'] = MDelta
         samples['mu'] = samples['mB'] + alpha * samples['x1'] \
-            - beta * samples['c'] + samples['MDelta']
+            + beta * samples['c'] + samples['MDelta']
+        del samples['MDelta']
+        del samples['x0']
         return samples
