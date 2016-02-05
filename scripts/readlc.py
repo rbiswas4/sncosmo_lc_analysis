@@ -12,6 +12,20 @@ class snlsLC(object):
         self.contents = contents
         self.headcontents = headcontents
         self.photcontents = photcontents
+        self.alias = {'time': 'date', 'band': 'filter'}
+
+    @property
+    def names(self):
+        _headers =  self.headers()
+
+        names = []
+        for col in _headers:
+            tmp = col.lower()
+            for key, vals in self.alias.items():
+                if col.lower() in vals:
+                    tmp = key
+            names.append(tmp.lower())
+        return names
 
 
     def headers(self):
@@ -24,19 +38,20 @@ class snlsLC(object):
         photTransposed = [x for x in photList if x !=[]]
         return [x for x in zip(*photTransposed)]
 
+    @property
     def meta(self):
         lines = [x.strip()[1:].split() for x in self.headcontents.split('\n')
                  if x.startswith('@')]
-        #keys, values = zip(*lines)
-        print lines
+        keys, values = zip(*lines)
         mydict = {}
         for pairs in lines:
             mydict[pairs[0]] = pairs[1]
-        
         return mydict
 
     @property
     def photometryTable(self):
-        Table(self.photometryL, names=self.headers)
+        pT =  Table(self.photometryL(), names=self.names)
+        pT.meta = self.meta
+        return pT
 
 
