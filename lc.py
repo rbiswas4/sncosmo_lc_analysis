@@ -141,8 +141,13 @@ class LC(object):
 
         return nestOut
 
-    def reset(fit):
-        pass
+    def reset(self, fit):
+        if fit is 'MLE':
+            print 'testing MLE reset'
+        if fit is 'MCMC':
+            print 'testing MCMC reset'
+        if fit is 'nest'
+            pass
 
     def reset_all(self):
         self._fitOut = None;
