@@ -6,9 +6,9 @@ A module for helper functions to read SNANA simulations
 import numpy as np
 import sncosmo
 
-import filters
+#import filters
 
-__all__ = [SnanaSims]
+__all__ = ['SnanaSims']
 
 
 class SnanaSims(object):

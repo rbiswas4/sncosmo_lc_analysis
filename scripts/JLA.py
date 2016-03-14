@@ -59,7 +59,7 @@ class PhotometryData(object):
         
     @property
     def photometryTable(self):
-        pT =  Table(self.photometryL(), names=self.names)
+        pT = Table(self.photometryL(), names=self.names)
         pT = self.sanitize(pT, self.band_prefix)
         for var in ['time', 'flux', 'fluxerr', 'zp']:
             _s = pT[var].astype(np.float) 
