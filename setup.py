@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(# package information
       name="analyzeSN",
-      version="0.0.1dev",
+      version="0.0.2dev",
       description='A set of utilities to analyze SN light curves',
       long_description=''' ''',
       # What code to include as packages
