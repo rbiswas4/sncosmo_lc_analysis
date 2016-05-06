@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 import os
+from .version import __version__
 #from . import filters
 #from . import snanaSims
 from .analyzelcFits import *
