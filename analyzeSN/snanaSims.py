@@ -3,12 +3,13 @@
 """
 A module for helper functions to read SNANA simulations
 """
+from __future__ import absolute_import
 import numpy as np
 import sncosmo
 
-import filters
+from . import filters
 
-__all__ = [SnanaSims]
+__all__ = ['SnanaSims']
 
 
 class SnanaSims(object):
