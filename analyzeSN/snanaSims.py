@@ -6,8 +6,10 @@ A module for helper functions to read SNANA simulations
 from __future__ import absolute_import
 import numpy as np
 import sncosmo
-
-from . import filters
+try:
+     from . import filters
+except:
+     print('This may fail without the throughputs directory')
 
 __all__ = ['SnanaSims']
 
@@ -47,7 +49,7 @@ class SnanaSims(object):
         """
         self.snList = sncosmo.read_snana_fits(head_file=headfile,
                                               phot_file=photfile,
-                                              snids=snids, n=None)
+                                              snids=snids, n=n)
 
     @classmethod
     def fromSNANAfileroot(cls, snanafileroot, location='./', snids=None,
@@ -77,7 +79,7 @@ class SnanaSims(object):
         print headfile
         data = sncosmo.read_snana_fits(head_file=headfile,
                                        phot_file=photfile,
-                                       snids=snids, n=None)
+                                       snids=snids, n=n)
         return cls(headfile=headfile, photfile=photfile, snids=snids,
                    n=n)
 
