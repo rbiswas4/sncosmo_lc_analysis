@@ -2,8 +2,6 @@ language: python
 python:
     - "2.7"
 cache: pip
-    bundler: true
-    custom_install: true
 install:
      pip install -r requirements.txt
     - python setup.py install --user
