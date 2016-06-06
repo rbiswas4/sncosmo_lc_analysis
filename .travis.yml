@@ -2,6 +2,8 @@ language: python
 python:
     - "2.7"
 install:
+    - git clone git://github.com/astropy/ci-helpers.git
+    - source ci-helpers/travis/setup_conda_$TRAVIS_OS_NAME.sh
     - pip install pandas
     - pip install cython
     - pip install --no-deps sncosmo
