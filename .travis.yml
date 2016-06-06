@@ -5,6 +5,7 @@ install:
     - git clone git://github.com/astropy/ci-helpers.git
     - source ci-helpers/travis/setup_conda_$TRAVIS_OS_NAME.sh
     - conda install pip
+    - pip install cython
     - pip install nose
     - pip install pandas
     - pip install sncosmo
