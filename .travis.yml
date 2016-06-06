@@ -3,7 +3,7 @@ python:
     - "2.7"
 cache: pip
 install:
-     pip install -r requirements.txt
+    - pip install -r requirements.txt
     - python setup.py install --user
 script:
     - nosetests -s --with-coverage --cover-package=sncosmo_lc_analysis
