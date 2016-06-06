@@ -2,9 +2,8 @@ language: python
 python:
     - "2.7"
 install:
-    - pip install astropy
-    - pip install sncosmo
     - pip install pandas
+    - pip install --no-deps sncosmo
     - python setup.py install --user
 script:
     - nosetests -s --with-coverage --cover-package=sncosmo_lc_analysis
