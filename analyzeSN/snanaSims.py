@@ -7,7 +7,7 @@ from __future__ import absolute_import
 import numpy as np
 from astropy.io import fits
 from astropy.utils import lazyproperty
-from astropy.table import Table
+from astropy.table import Table, Column
 import sncosmo
 import pandas as pd
 
@@ -20,7 +20,7 @@ class SnanaSims(object):
 
     """
     class to hold data from SNANA simulations and methods to manipulate the
-    data
+    data.
 
 
     Attributes
@@ -31,7 +31,8 @@ class SnanaSims(object):
 
     """
 
-    def __init__(self, headfile, photfile, snids=None, n=None, cutFunc=None):
+    def __init__(self, headfile, photfile, snids=None, n=None, cutFunc=None,
+                 noPhot=False):
         """
         Instantiate class from SNANA simulation output files in fits format
 
@@ -48,10 +49,14 @@ class SnanaSims(object):
             if not None, only the first n SN light curves are loaded
 
         cutFunc : callable, optional, defaults to None
-           function of the form cutFunc(snid, headfile, photfile) = True if the
+           function of the form cutFunc(snid, headData, photdata, noPhot=False)
            SN reperesented by snid in the files should be used. If None, no
            function is applied and consequently all SN in the simulation are
-           used
+           used. If noPhot is set to True,then the cutFunc can be applied on
+           the headData only
+        noPhot : Bool, optional, defaults to False
+            If True, it is assumed that the cuts are only applied on the
+            headData
 
         ..note: The column names of the SNANA data files are not reformated
                  for SNCosmo use
@@ -59,13 +64,16 @@ class SnanaSims(object):
 
         """
         self.headfile = headfile
-        self.headdata = self.get_headData(self.headfile)
+        self.headData = self.get_headData(self.headfile)
         self.photfile = photfile
         self.phothdu = fits.open(photfile)
-
+        self.noPhot = noPhot
         self.snList = None # sncosmo.read_snana_fits(head_file=self.headfile,
         #  phot_file=self.photfile,
         #  snids=snids, n=None)
+
+
+
 
     @classmethod
     def fromSNANAfileroot(cls,
@@ -115,24 +123,46 @@ class SnanaSims(object):
         -------
         A dataFrame with the data in the Head file, 
         """
-        headData = Table.read(headfile).to_pandas()
-        # If the type is string (object in pandas)
-        if headData.SNID.dtype == 'O':
-            headData.SNID = headData.SNID.apply(lambda x: x.strip())
-        return headData
+        headData = Table.read(headfile)
+        # If the type is string
+        if headData['SNID'].dtype.type is np.string_:
+            data = headData['SNID'].data
+            name = headData['SNID'].name
+            dtype = headData['SNID'].dtype
+            arr = list(x.strip().lower() for x in data)
+            col = Column(data=arr, name=name, dtype=dtype) 
+            headData['SNID'] = col
+        headData = headData.to_pandas()
+        return headData.set_index('SNID')
 
 
 
     @staticmethod
-    def snlc(snid, headData, phothdu):
+    def get_SNANAPhotometry(snid,
+                            headData=None,
+                            phothdu=None,
+                            headFile=None,
+                            photFile=None):
         """
-        obtain the SN light curve from the photometry files
+        obtain the SNANA photmetry from the head and photometry
+        files
 
         Parameters
         ----------
-        headData : `panda.DataFrame`, mandatory
-        phothdu : `hdu` 
-        snid : index for SN. Can be integer or string.
+        snid : string or int, mandatory
+            index of SNANA SN, If string, whitespace padding will be removed
+            and all characters are transformed into lower case.
+        headData : `panda.DataFrame`, optional, defaults to None
+            a `pandas.DataFrame` object holding data from the SNANA
+            headfile. If None, uses the headFile paramter to generate this
+            and headFile cannot be None in that case.
+        phothdu : `hdu` for FITS file, optional, defaults to None
+            `hdu` corresponding to the SNANA photFile, If None, generates this
+            from the photFile parameter and photFile cannot be None.
+        headFile : string, optional, defaults to None
+            absolute path to SNANA photFile. Ignored if headData is supplied
+        photFile : string, optional, defaults to None
+            absolute path to SNANA photFile. Ignored if phothdu is supplied
 
         Returns
         -------
@@ -142,20 +172,21 @@ class SnanaSims(object):
             # snid is a string
             snid = snid.strip().lower()
         
+        if headData is None:
+            if headFile is None:
+                raise ValueError('both headData and headFile cannot be None\n')
+            headData = SnanaSims.get_headData(headFile) 
+
+        if phothdu is None:
+            phothdu = fits.open(photFile)
+            if photFile is None:
+                raise ValueError('both phothdu and photFile cannot be None\n')
         ptrs_cols = ['PTROBS_MIN', 'PTROBS_MAX']
-        ptrs = headData.query('SNID == @snid')[ptrs_cols].values
+        ptrs = headData.ix[snid, ptrs_cols].values
         ptrs[0] -= 1
 
-        data = phothdu[1].data
-        dt = data.dtype
 
-        lc = []
-        for i, datum in enumerate(data):
-            if i >= ptrs[0]:
-                lc.append(datum)
-                if i > ptrs[1]:
-                    break
-        return np.array(lc, dtype=dt)
+        return phothdu[1].data[ptrs[0]: ptrs[1]]
 
 
     @staticmethod
@@ -178,7 +209,7 @@ class SnanaSims(object):
 
         Returns
         -------
-            string : absolute path to the SNANA file 
+            string : absolute path to the SNANA files 
 
         """
         import os
