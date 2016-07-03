@@ -70,11 +70,15 @@ class SnanaSims(object):
         self.headData = self.get_headData(self.headfile)
         self.photfile = photfile
         self.phothdu = fits.open(photfile)
+        self.photdata = fits.getdata(photfile, 1, view=np.array, memmap=True)
         self.snList = None # sncosmo.read_snana_fits(head_file=self.headfile,
 
 
-    def getSN(self, cutFunc, noPhot=False):
-	for ind, row in self.headData.reset_index().iterrows():
+
+    def getSN(self, cutFunc, noPhot=False, numstart=0, nums=10000):
+	for ind, row in self.headData.reset_index().head(nums+numstart).iterrows():
+            if ind < numstart:
+                continue
 	    summaryProps = odict(row)
 	    snid = summaryProps['SNID']
 	    if noPhot:
