@@ -10,7 +10,7 @@ from astropy.utils import lazyproperty
 from astropy.table import Table, Column
 import sncosmo
 import pandas as pd
-
+from collections import OrderedDict as odict
 from . import filters
 
 __all__ = ['SnanaSims']
@@ -49,7 +49,10 @@ class SnanaSims(object):
             if not None, only the first n SN light curves are loaded
 
         cutFunc : callable, optional, defaults to None
-           function of the form cutFunc(snid, headData, photdata, noPhot=False)
+           function of the form cutFunc(snid, headDict, photData=None) which
+           should return True if a SN with SNID snid, headData represented by
+           a `collections.orderedDict` instance headDict, and photData
+           represented by a `numpy.recarray` are passed
            SN reperesented by snid in the files should be used. If None, no
            function is applied and consequently all SN in the simulation are
            used. If noPhot is set to True,then the cutFunc can be applied on
@@ -67,14 +70,28 @@ class SnanaSims(object):
         self.headData = self.get_headData(self.headfile)
         self.photfile = photfile
         self.phothdu = fits.open(photfile)
-        self.noPhot = noPhot
         self.snList = None # sncosmo.read_snana_fits(head_file=self.headfile,
-        #  phot_file=self.photfile,
-        #  snids=snids, n=None)
 
 
-
-
+    def getSN(self, cutFunc, noPhot=False):
+	for ind, row in self.headData.reset_index().iterrows():
+	    summaryProps = odict(row)
+	    snid = summaryProps['SNID']
+	    if noPhot:
+		photData = None
+	    else:
+		photData = self.get_SNANAPhotometry(snid, self.headData,
+						    self.phothdu)
+	    if cutFunc(snid, summaryProperties=summaryProps,
+		       photometryData=photData, noPhot=True):
+		if photData is None:
+		    lc = sne.get_SNANAPhotometry(snid, sne.headData,
+					         sne.phothdu)
+		else:
+		    lc = photData
+		myTable = Table(lc)
+		myTable.meta = summaryProps
+		yield myTable
     @classmethod
     def fromSNANAfileroot(cls,
                           snanafileroot,
