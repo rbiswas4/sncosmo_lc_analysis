@@ -6,6 +6,7 @@ A module for helper functions to read SNANA simulations
 from __future__ import absolute_import
 import numpy as np
 from astropy.io import fits
+import fitsio
 from astropy.utils import lazyproperty
 from astropy.table import Table, Column
 import sncosmo
@@ -70,32 +71,86 @@ class SnanaSims(object):
         self.headData = self.get_headData(self.headfile)
         self.photfile = photfile
         self.phothdu = fits.open(photfile)
-        self.photdata = fits.getdata(photfile, 1, view=np.array, memmap=True)
+        self.photFits = fitsio.FITS(photfile)
         self.snList = None # sncosmo.read_snana_fits(head_file=self.headfile,
 
+#    def getSN(self, cutFunc, noPhot=False, numstart=0, nums=10000):
+#
+#        NoSelections = False
+#        select = False
+#        if cutFunc is None:
+#            NoSelections = True
+#        if nums is None:
+#            headData = self.headData.reset_index()
+#        else:
+#            headData = self.headData.reset_index().head(nums+numstart)
+#
+#	for ind, row in headData.iterrows():
+#            if ind < numstart:
+#                continue
+#	    summaryProps = odict(row)
+#	    snid = summaryProps['SNID']
+#	    if noPhot:
+#		photData = None
+#	    else:
+#		photData = self.get_SNANAPhotometry(snid, self.headData,
+#						    self.phothdu)
+#            if not NoSelections:
+#                select = cutFunc(snid, summaryProperties=summaryProps,
+#                                  photometryData=photData, noPhot=True)
+#            
+#            if select or NoSelections:
+#		if photData is None:
+#		    lc = sne.get_SNANAPhotometry(snid, sne.headData,
+#					         sne.phothdu)
+#		else:
+#		    lc = photData
+#		myTable = Table(lc)
+#		myTable.meta = summaryProps
+#		yield myTable
+    @staticmethod
+    def addColumnsToLC(snid, format='pandas'):
 
+        lc = self.get_SNANAPhotometry(snid,
+                                      headData=self.headData
+                                      photFITS=self.photFits)
 
-    def getSN(self, cutFunc, noPhot=False, numstart=0, nums=10000):
-	for ind, row in self.headData.reset_index().head(nums+numstart).iterrows():
-            if ind < numstart:
-                continue
+        lct = pd.DataFrame(lc)
+        lct['SNID'] = snid
+        return lct
+
+    def getAllSNPhot(self, cutFunc=None, noPhot=True, snids=None, range=(0, -1)):
+        """
+        """
+        if snids is None
+            snids = self.headData.index.values[range[0]:range[1]]
+        return (self.addColumnsToLC(snid) for snid in snids if cutFunc(snid,
+                                                                       headData,
+                                                                       self.addColumnsToLC))
+
+    def getSelectedSNPhot(self, cutFunc=None, noPhot=True, snids=None, range=(0, -1)):
+        """
+        """
+        if snids is None
+            snids = self.headData.index.values[range[0]:range[1]]
+        return (self.addColumnsToLC(snid) for snid in snids)
+
+    def getSN(self, cutFunc=None, noPhot=True, photPandas=False):
+        """
+        cutFunc
+        noPhot :
+        photPandas:
+        """
+        headData = self.headData.reset_index()
+	for ind, row in headData.iterrows():
 	    summaryProps = odict(row)
 	    snid = summaryProps['SNID']
-	    if noPhot:
-		photData = None
-	    else:
-		photData = self.get_SNANAPhotometry(snid, self.headData,
-						    self.phothdu)
-	    if cutFunc(snid, summaryProperties=summaryProps,
-		       photometryData=photData, noPhot=True):
-		if photData is None:
-		    lc = sne.get_SNANAPhotometry(snid, sne.headData,
-					         sne.phothdu)
-		else:
-		    lc = photData
-		myTable = Table(lc)
-		myTable.meta = summaryProps
-		yield myTable
+	    lc = self.get_SNANAPhotometry(snid,
+                                          headData=self.headData,
+	          		          photFits=self.photFits)
+	    myTable = Table(lc)
+	    myTable.meta = summaryProps
+	    yield myTable
     @classmethod
     def fromSNANAfileroot(cls,
                           snanafileroot,
@@ -161,7 +216,7 @@ class SnanaSims(object):
     @staticmethod
     def get_SNANAPhotometry(snid,
                             headData=None,
-                            phothdu=None,
+                            photFits=None,
                             headFile=None,
                             photFile=None):
         """
@@ -177,9 +232,10 @@ class SnanaSims(object):
             a `pandas.DataFrame` object holding data from the SNANA
             headfile. If None, uses the headFile paramter to generate this
             and headFile cannot be None in that case.
-        phothdu : `hdu` for FITS file, optional, defaults to None
-            `hdu` corresponding to the SNANA photFile, If None, generates this
-            from the photFile parameter and photFile cannot be None.
+        photFits : `fitsio.FITS` instance, optional, defaults to None
+            `fitsio.FITS` instance corresponding to the SNANA photFile, If
+            None, generates this from the `photFile` parameter
+        #    from the photFile parameter and photFile cannot be None.
         headFile : string, optional, defaults to None
             absolute path to SNANA photFile. Ignored if headData is supplied
         photFile : string, optional, defaults to None
@@ -198,16 +254,19 @@ class SnanaSims(object):
                 raise ValueError('both headData and headFile cannot be None\n')
             headData = SnanaSims.get_headData(headFile) 
 
-        if phothdu is None:
-            phothdu = fits.open(photFile)
-            if photFile is None:
-                raise ValueError('both phothdu and photFile cannot be None\n')
         ptrs_cols = ['PTROBS_MIN', 'PTROBS_MAX']
         ptrs = headData.ix[snid, ptrs_cols].values
         ptrs[0] -= 1
 
+        # if the `fitsio.FITS` instance is not provided
+        if photFits is None:
+            if photFile is None:
+                raise ValueError('both headData and headFile cannot be None\n')
+            photFits = fitsio.FITS(photFile)
 
-        return phothdu[1].data[ptrs[0]: ptrs[1]]
+        lcdata = photFits[1][ptrs[0]: ptrs[1]]
+        return lcdata
+
 
 
     @staticmethod
