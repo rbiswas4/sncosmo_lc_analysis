@@ -72,7 +72,38 @@ class SnanaSims(object):
         self.photfile = photfile
         self.phothdu = fits.open(photfile)
         self.photFits = fitsio.FITS(photfile)
-        self.snList = None # sncosmo.read_snana_fits(head_file=self.headfile,
+        self.snids = None
+        self._snList = None # sncosmo.read_snana_fits(head_file=self.headfile,
+
+        @property
+        def snList(self):
+            """
+            Return a list of light curves of selected SN with the selection
+            determined by self.snids. 
+
+            If self.snids is None, all SN in the simulation shall be accessed.
+            If one only wants to access a subset of the SN, the SnanaSims object
+            should be instantiated, and a suitable selection performed and
+            assigned to self.snids before accessing this attribute
+            """
+            if self._snList is None:
+                return self.get_snList(self.snids)
+            elif len(set(self.snids) - set(self.snidsForsnList(self._snList)))\
+                > 0 :
+                newids = \
+                list(set(self.snids) - set(self.snidsForsnList(self._snList)))
+                newSN = self.get_snList(newids)
+                return self._snList + self.newSN
+            else:
+                return self._snList
+
+    @staticmethod
+    def snidsForSnList(snlist):
+        """
+        return a list of snids for each SN in SNList
+        """
+        return list(sn.meta['SNID'] for sn in snlist)
+
 
 #    def getSN(self, cutFunc, noPhot=False, numstart=0, nums=10000):
 #
@@ -199,7 +230,7 @@ class SnanaSims(object):
         -------
         A dataFrame with the data in the Head file, 
         """
-        headData = Table.read(headfile)
+        headData = fitsio.read(headfile)
         # If the type is string
         if headData['SNID'].dtype.type is np.string_:
             data = headData['SNID'].data
@@ -245,7 +276,7 @@ class SnanaSims(object):
         -------
         `numpy.recarray` of data
         """
-        if not isinstance(snid, int):
+        if isinstance(snid, basestring):
             # snid is a string
             snid = snid.strip().lower()
         
