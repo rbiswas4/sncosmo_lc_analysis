@@ -1,6 +1,7 @@
 from __future__ import absolute_import, print_function, division
 import fitsio
 import pandas as pd
+import numpy as np
 from astropy.table import Table, Column
 
 
