@@ -2,6 +2,7 @@ from __future__ import absolute_import, print_function, division
 import fitsio
 import pandas as pd
 import numpy as np
+import os
 from astropy.table import Table, Column
 
 
@@ -26,7 +27,41 @@ class SNANASims(object):
         self.headData = self.get_headData(self.headFile,
 					  coerce_inds2int=coerce_inds2int)
         self.phot = fitsio.FITS(photFile)
-    
+    @staticmethod
+    def snanadatafile(snanafileroot, filetype='head', location='./'):
+        '''
+        obtain the name of the head or phot file of an SNANA simulation
+        and dataset
+
+        Parameters
+        ----------
+        snanafileroot : string, mandatory
+            root file name for the SNANA which is the prefix to
+            '_HEAD.FITS', or '_PHOT.FITS'
+        filetype : string, optional defaults to 'head'
+            'head' or 'phot' depending on whether a summary file or a photometry
+            file is being used.
+        location : string, optional defaults to current working directory './' 
+            relative or absolute path to the directory in which the file is
+            located
+
+        Returns
+        -------
+            string : absolute path to the SNANA file 
+
+        '''
+
+        desiredfiletype = ['head', 'phot']
+        filetype = filetype.lower()
+        if not filetype in desiredfiletype:
+            raise ValueError(
+                'filetype should be one of "head" or "phot"', filetype)
+        location = os.path.abspath(location)
+        suffix = '_HEAD.FITS'
+        if filetype.lower() == 'phot':
+            suffix = '_PHOT.FITS'
+        fname = snanafileroot + suffix
+        return os.path.join(location, fname)
     @staticmethod 
     def get_headData(headFile, coerce_inds2int=False):
 	"""
