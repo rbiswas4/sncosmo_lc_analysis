@@ -27,6 +27,35 @@ class SNANASims(object):
         self.headData = self.get_headData(self.headFile,
 					  coerce_inds2int=coerce_inds2int)
         self.phot = fitsio.FITS(photFile)
+
+    @classmethod
+    def fromSNANAfileroot(cls, snanafileroot, location='./',
+                          coerce_inds2int=False):
+        """
+        Class constructor from a root file and a location
+
+        Parameters
+        ----------
+        snanafileroot : string, mandatory
+            root file name for the SNANA which is the prefix to
+            '_HEAD.FITS', or '_PHOT.FITS'
+        location : string, optional defaults to current working directory './' 
+            Relative or absolute path to the directory where the head and phot
+            files are located
+        snids : integer/string, optional defaults to None
+            if not None, only SN observations corresponding to SNID snid
+            are loaded
+        n : Integer, defaults to None
+            if not None, only the first n SN light curves are loaded
+        """
+
+        headfile = cls.snanadatafile(snanafileroot, filetype='head',
+                                     location=location)
+        photfile = cls.snanadatafile(snanafileroot, filetype='phot',
+                                     location=location)
+        return cls(headfile=headfile, photfile=photfile,
+                   coerce_inds2int=coerce_inds2int)
+    
     @staticmethod
     def snanadatafile(snanafileroot, filetype='head', location='./'):
         '''
@@ -117,7 +146,7 @@ class SNANASims(object):
         if ptrs is not None:
             assert np.shape(ptrs) == (2,)
         elif snid is not None:
-            ptrs = self.get_photrows(snid=snid)
+            ptrs = self.get_photrows(snid=snid.strip().lower())
         else:
             raise ValueError('Both {0} and {1} cannot be None simulataneously'.format('snid', 'row'))
         lcData = self.phot[1][ptrs[0]: ptrs[1]].byteswap().newbyteorder()
