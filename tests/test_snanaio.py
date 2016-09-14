@@ -2,6 +2,8 @@
 
 import analyzeSN as ans
 import os
+import pandas as pd
+from pandas.util.testing import assert_frame_equal
 def test_load():
     headFile = os.path.join(ans.__path__[0], 'example_data', 'snana_fits_HEAD.FITS')
     photFile = os.path.join(ans.__path__[0], 'example_data', 'snana_fits_PHOT.FITS')
@@ -22,4 +24,12 @@ def test_snanadatafiles():
                                                location=loc)
     assert testheadFile == headFile
     assert testphotFile == photFile
+def test_fromSNANAfileroot():
+    loc = os.path.join(ans.__path__[0], 'example_data')
+    headFile = os.path.join(ans.__path__[0], 'example_data', 'snana_fits_HEAD.FITS')
+    photFile = os.path.join(ans.__path__[0], 'example_data', 'snana_fits_PHOT.FITS')
 
+    sne = ans.SNANASims(headFile=headFile, photFile=photFile, coerce_inds2int=False)
+    test_sne = ans.SNANASims.fromSNANAfileroot(snanafileroot='snana_fits',
+                                               location=loc)
+    assert_frame_equal(test_sne.headData, sne.headData)

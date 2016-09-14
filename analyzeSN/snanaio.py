@@ -53,7 +53,7 @@ class SNANASims(object):
                                      location=location)
         photfile = cls.snanadatafile(snanafileroot, filetype='phot',
                                      location=location)
-        return cls(headfile=headfile, photfile=photfile,
+        return cls(headFile=headfile, photFile=photfile,
                    coerce_inds2int=coerce_inds2int)
     
     @staticmethod
